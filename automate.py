@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # === Konfigurasi Gmail API ===
 SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
 TOKEN_PATH = "token.json"
-CREDENTIALS_PATH = "client_secret.json"
+CREDENTIALS_PATH = "client_secret_739705307269-e8vmb0lv0n493qln63is9ajomqaa0fmh.apps.googleusercontent.com.json"
 
 # === Fungsi Autentikasi Gmail API ===
 def authenticate_gmail():
