@@ -24,33 +24,50 @@ CREDENTIALS_PATH = "client_secret_739705307269-e8vmb0lv0n493qln63is9ajomqaa0fmh.
 def authenticate_gmail():
     creds = None
 
-    # Cek apakah ada token yang tersimpan
+    # Pastikan file client_secret ada
+    if not os.path.exists(CREDENTIALS_PATH):
+        st.error(f"File kredensial {CREDENTIALS_PATH} tidak ditemukan!")
+        return None
+
+    # Cek apakah ada token yang sudah tersimpan
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, "rb") as token:
             creds = pickle.load(token)
 
-    # Jika belum ada kredensial atau sudah kedaluwarsa
+    # Jika token tidak ada atau sudah kedaluwarsa
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
 
-            # **Gunakan metode authorization code**
+            # Tampilkan link autentikasi
             auth_url, _ = flow.authorization_url(prompt="consent")
-            print(f"Silakan buka link ini untuk autentikasi: {auth_url}")
+            st.write("Silakan buka link berikut untuk autentikasi Gmail API:")
+            st.markdown(f"[Klik di sini untuk autentikasi]({auth_url})")
 
-            # Minta user memasukkan kode dari browser
-            auth_code = st.text_input("Masukkan kode verifikasi dari Google:")
+            # Minta kode verifikasi dari pengguna
+            auth_code = st.text_input("Masukkan kode verifikasi dari Google:", "")
             if auth_code:
-                flow.fetch_token(code=auth_code)
-                creds = flow.credentials
+                try:
+                    flow.fetch_token(code=auth_code)
+                    creds = flow.credentials
 
-        # Simpan token untuk penggunaan berikutnya
-        with open(TOKEN_PATH, "wb") as token:
-            pickle.dump(creds, token)
+                    # Simpan token untuk penggunaan selanjutnya
+                    with open(TOKEN_PATH, "wb") as token:
+                        pickle.dump(creds, token)
+                    
+                    # Simpan service di session state agar bisa digunakan di aplikasi
+                    st.session_state["service"] = build("gmail", "v1", credentials=creds)
+                    st.success("Autentikasi berhasil!")
+                    return st.session_state["service"]
+
+                except Exception as e:
+                    st.error(f"Autentikasi gagal: {e}")
+                    return None
 
     return build("gmail", "v1", credentials=creds)
+
 
 
 # === Streamlit UI ===
