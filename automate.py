@@ -24,7 +24,7 @@ CREDENTIALS_PATH = "client_secret_739705307269-e8vmb0lv0n493qln63is9ajomqaa0fmh.
 def authenticate_gmail():
     creds = None
 
-    # Cek apakah ada token yang sudah tersimpan
+    # Cek apakah ada token yang tersimpan
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, "rb") as token:
             creds = pickle.load(token)
@@ -34,15 +34,24 @@ def authenticate_gmail():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # **Gunakan run_console() untuk Streamlit Cloud**
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_console()  # Ganti run_local_server() dengan run_console()
+
+            # **Gunakan metode authorization code**
+            auth_url, _ = flow.authorization_url(prompt="consent")
+            print(f"Silakan buka link ini untuk autentikasi: {auth_url}")
+
+            # Minta user memasukkan kode dari browser
+            auth_code = st.text_input("Masukkan kode verifikasi dari Google:")
+            if auth_code:
+                flow.fetch_token(code=auth_code)
+                creds = flow.credentials
 
         # Simpan token untuk penggunaan berikutnya
         with open(TOKEN_PATH, "wb") as token:
             pickle.dump(creds, token)
 
     return build("gmail", "v1", credentials=creds)
+
 
 # === Streamlit UI ===
 st.title("📧 Automasi Distribusi Data Email")
